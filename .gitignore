@@ -1,1 +1,4 @@
 *.swp
+models/
+__pycache__/
+wavTranscriber/__pycache__/
