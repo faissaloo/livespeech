@@ -26,6 +26,7 @@ PREV_AUDIO = 0.5  # Previous audio (in seconds) to prepend. When noise
                   # of the phrase.
 
 def listen_for_speech(**kwargs):
+    transcribe_audio=kwargs.get('transcribe_audio', True)
     threshold=kwargs.get('threshold', THRESHOLD)
     num_phrases=kwargs.get('num_phrases', -1)
     model_dir=kwargs.get('model_dir', 'models')
@@ -37,7 +38,11 @@ def listen_for_speech(**kwargs):
     on_record_end=kwargs.get('on_record_end', lambda *_: None)
     on_transcription=kwargs.get('on_transcription', lambda *_: None)
 
-    dso = load_model_from_dir(model_dir)
+    if transcribe_audio:
+        dso = load_model_from_dir(model_dir)
+    else:
+        dso = None
+
     #Open stream
     p = pyaudio.PyAudio()
 
@@ -61,20 +66,22 @@ def listen_for_speech(**kwargs):
     response = []
 
     on_ready()
-    while (num_phrases == -1 or n > 0):
+    while num_phrases == -1 or n > 0:
         cur_data = stream.read(CHUNK)
         slid_win.append(math.sqrt(abs(audioop.avg(cur_data, 4))))
 
-        if(sum([x > THRESHOLD for x in slid_win]) > 0):
+        if sum([x > THRESHOLD for x in slid_win]) > 0:
             if(not started):
                 on_record_start()
                 started = True
             audio_to_process.append(cur_data)
-        elif (started is True):
+        elif started:
             on_record_end(list(prev_audio) + audio_to_process)
-            # Transcribe
-            text_value = deepspeech_stt(dso, list(prev_audio) + audio_to_process)
-            on_transcription(text_value)
+
+            if transcribe_audio:
+                # Transcribe
+                text_value = deepspeech_stt(dso, list(prev_audio) + audio_to_process)
+                on_transcription(text_value)
 
             # Reset all
             started = False
