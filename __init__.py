@@ -76,6 +76,7 @@ def listen_for_speech(**kwargs):
                 started = True
             audio_to_process.append(cur_data)
         elif started:
+            stream.stop_stream()
             on_record_end(list(prev_audio) + audio_to_process, p)
 
             if transcribe_audio:
@@ -83,12 +84,14 @@ def listen_for_speech(**kwargs):
                 text_value = deepspeech_stt(dso, list(prev_audio) + audio_to_process)
                 on_transcription(text_value)
 
+
             # Reset all
             started = False
             slid_win = deque(maxlen=int(SILENCE_LIMIT * rel))
             prev_audio = deque(maxlen=int(0.5 * rel))
             audio_to_process = []
             n -= 1
+            stream.start_stream()
             on_ready()
         else:
             prev_audio.append(cur_data)
