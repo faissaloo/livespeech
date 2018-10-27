@@ -76,7 +76,7 @@ def listen_for_speech(**kwargs):
                 started = True
             audio_to_process.append(cur_data)
         elif started:
-            on_record_end(list(prev_audio) + audio_to_process)
+            on_record_end(list(prev_audio) + audio_to_process, p)
 
             if transcribe_audio:
                 # Transcribe
@@ -99,14 +99,14 @@ def listen_for_speech(**kwargs):
 
 def save_deepspeech_audio(data, p, filename):
     # writes data to WAV file
-    data = ''.join(data)
-    wf = wave.open(filename + '.wav', 'wb')
+    data = b''.join(data)
+    wf = wave.open(filename, 'wb')
     wf.setnchannels(1)
     wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
     wf.setframerate(16000)
     wf.writeframes(data)
     wf.close()
-    return filename + '.wav'
+    return filename
 
 
 # dso = deepspeech object
